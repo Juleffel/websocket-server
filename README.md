@@ -10,11 +10,7 @@ be paired with [fentontravers/websocket-client](https://github.com/ftravers/webs
 # Usage
 
 ```clojure
-(require '[websocket-server.core :refer [start-ws-server]])
-
-;; After we start the server a function is returned
-;; that we use for stopping the server.
-(defonce ws-server (atom nil))
+(require '[websocket-server.core :refer :all])
 
 (defn request-handler-upcase-string
   "The function that will take incoming data off the websocket,
@@ -22,13 +18,22 @@ be paired with [fentontravers/websocket-client](https://github.com/ftravers/webs
   whatever is received."
   [data] (clojure.string/upper-case (str data)))
 
+; Always call this module functions with a port, unless you want to apply it to every server you opened on all ports.
+(def port 8899)
+
 (defn start
   "Demonstrate how to use the websocket server library."
   []
-  (let [port 8899]
-    (reset! ws-server (start-ws-server port request-handler-upcase-string))))
+  (start-ws-server port request-handler-upcase-string))
 
-(defn stop "Stop websocket server" [] (@ws-server))
+(defn send-all!
+  [data]
+  (send-all! port data))
+
+(defn stop
+  "Stop websocket server"
+  []
+  (stop-ws-server port))
 ```
   
 Here is another example that expects EDN in the form of a map that
@@ -45,4 +50,22 @@ back.
        (+ 10)
        (hash-map :count)
        str))
+```
+
+# Multiple servers usage
+
+```clojure
+(start-ws-server 8000 request-handler-1)
+(start-ws-server 8001 request-handler-2)
+(start-ws-server 8002 request-handler-3)
+
+; Send "Hello" to all channels opened to websocket on port 8000
+(send-all! 8000 "Hello")
+
+(stop-ws-server 8002)
+
+; Send "Hi!" to all channels opened to websocket on port 8000 or 8001
+(send-all! "Hello")
+
+(stop-all-ws-servers)
 ```

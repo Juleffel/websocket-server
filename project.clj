@@ -9,5 +9,9 @@
                  [org.clojure/core.async "0.2.395"]]
   :target-path "target/%s"
 
-  :profiles {:dev {:source-paths ["dev" "src"]}
+  :jvm-opts ["--add-modules" "java.xml.bind"]
+
+  :profiles {:dev {:source-paths ["dev" "src"]
+                   :dependencies [[stylefruits/gniazdo "1.0.1"]
+                                  [org.clojure/core.async "0.4.474"]]}
              :uberjar {:aot :all}})
