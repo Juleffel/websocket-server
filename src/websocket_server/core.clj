@@ -62,10 +62,27 @@
 
 (comment
   (def port 8899)
-  (start-ws-server port
+  (defn handle [data]
+    (println "Message handled:" data)
+    data)
+  ; Example to work with https://github.com/ftravers/transit-websocket-client/
+  (start-ws-server
+    port
     (fn [[action data]]
-      (println action data)
-      [action (clojure.string/upper-case (str data))])
+      [action (handle data)])
     json/read-str json/write-str)
-  (send-all! port ["~#'" "Message from backend"])
+  (send-all! port ["~#'" (str [[:back-msg] "Message from backend"])])
+  ; Example to work with https://github.com/ftravers/reframe-websocket/
+  (start-ws-server
+    port
+    (fn [[store-path data]]
+      [store-path (handle data)])
+    (fn [s]
+      (let [[_ rf-msg] (json/read-str s)]
+        (read-string rf-msg)))
+    (fn [msg]
+      (json/write-str
+        ["~#'" (str msg)])))
+  (send-all! port [[:back-msg] "Message from backend"])
+  (send-all! port [[:back-msg] {:map 134 :text "EDN from backend"}])
   (stop-ws-server port))
