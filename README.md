@@ -84,7 +84,7 @@ back.
 
 ; json/read-str will be applied before sending data to request-json-handler
 ; json/write-str will be applied before sending data from request-json-handler
-;   back on the websocket, or when using (send-all! port data)
+;   back on the websocket, or when using send-all!
 (start-ws-server 8000 request-handler-json json/read-str json/write-str)
 
 ```
