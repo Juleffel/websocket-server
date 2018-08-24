@@ -6,10 +6,9 @@
   :dependencies [[org.clojure/clojure "1.9.0-alpha16"]
                  [http-kit "2.2.0"]
                  [com.taoensso/timbre "4.8.0"]
-                 [org.clojure/core.async "0.2.395"]]
+                 [org.clojure/core.async "0.2.395"]
+                 [org.clojure/data.json "0.2.6"]]
   :target-path "target/%s"
-
-  :jvm-opts ["--add-modules" "java.xml.bind"]
 
   :profiles {:dev {:source-paths ["dev" "src"]
                    :dependencies [[stylefruits/gniazdo "1.0.1"]

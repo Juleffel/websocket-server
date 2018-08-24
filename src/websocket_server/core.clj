@@ -1,27 +1,29 @@
 (ns websocket-server.core
   (:require [org.httpkit.server :as http]
-            [taoensso.timbre :as log]))
+            [taoensso.timbre :as log]
+            [clojure.data.json :as json]))
 
 ; In case we want to start multiple servers, we will keep them as port -> server
 (defonce channel-hub (atom {}))
 (defonce servers (atom {}))
 
 (defn websocket-server [port cb req]
-  (http/with-channel req channel
-    (swap! channel-hub assoc-in [port channel] req)
-    (http/on-close
-     channel
-     (fn [status]
-       (log/debug (str "Websocket channel closed with status: " status))
-       (swap! channel-hub update port dissoc channel)))
-    (http/on-receive
-     channel
-     (fn [data]
-       (if (http/websocket? channel)
-         (let [resp (cb data)]
-           (log/debug "RECV: " data)
-           (log/debug "RESP: " resp)
-           (http/send! channel resp)))))))
+  (let [{:keys [in-fn out-fn]} (@servers port)]
+    (http/with-channel req channel
+      (swap! channel-hub assoc-in [port channel] req)
+      (http/on-close
+       channel
+       (fn [status]
+         (log/debug (str "Websocket channel closed with status: " status))
+         (swap! channel-hub update port dissoc channel)))
+      (http/on-receive
+       channel
+       (fn [data]
+         (if (http/websocket? channel)
+           (let [resp (cb (in-fn data))]
+             (log/debug "RECV: " data)
+             (log/debug "RESP: " resp)
+             (http/send! channel (out-fn resp)))))))))
 
 (defn send-all!
   ([data]
@@ -30,24 +32,40 @@
      (send-all! port data)))
   ([port data]
    (doseq [channel (keys (@channel-hub port))]
-     (http/send! channel data))))
+     (http/send! channel ((get-in @servers [port :out-fn]) data)))))
 
 (defn stop-ws-server [port]
-  (when-not (nil? (@servers port))
+  (when (@servers port)
     ;; graceful shutdown: wait 100ms for existing requests to be finished
     ;; :timeout is optional, when no timeout, stop immediately
-    ((@servers port) :timeout 100)
+    ((get-in @servers [port :server]) :timeout 100)
     (swap! servers dissoc port)))
 
-(defn start-ws-server [port callback]
-  (if (@servers port)
-    (stop-ws-server port))
-  (let [server
-        (http/run-server (partial websocket-server port callback)
-                         {:port port})]
-    (swap! servers assoc port server)
-    server))
+(defn start-ws-server
+  ([port callback]
+   (start-ws-server port callback identity identity))
+  ([port callback in-fn out-fn]
+   (if (@servers port)
+     (stop-ws-server port))
+   (let [server
+         (http/run-server (partial websocket-server port callback)
+                          {:port port})]
+     (swap! servers assoc port
+       {:server server
+        :in-fn in-fn
+        :out-fn out-fn})
+     server)))
 
 (defn stop-all-ws-servers []
   (doseq [port (keys @servers)]
     (stop-ws-server port)))
+
+(comment
+  (def port 8899)
+  (start-ws-server port
+    (fn [[action data]]
+      (println action data)
+      [action (clojure.string/upper-case (str data))])
+    json/read-str json/write-str)
+  (send-all! port ["~#'" "Message from backend"])
+  (stop-ws-server port))

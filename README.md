@@ -69,3 +69,22 @@ back.
 
 (stop-all-ws-servers)
 ```
+
+# Use transformer functions when receiving and sending data
+
+```clojure
+(require '[clojure.data.json :as json])
+
+(defn request-handler-json
+    [[action data]]
+    [action
+     (case action
+        "upcase" (request-handler-upcase-string data)
+        data)])
+
+; json/read-str will be applied before sending data to request-json-handler
+; json/write-str will be applied before sending data from request-json-handler
+;   back on the websocket, or when using (send-all! port data)
+(start-ws-server 8000 request-handler-json json/read-str json/write-str)
+
+```
