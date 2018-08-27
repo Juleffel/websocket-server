@@ -5,8 +5,8 @@ be paired with [fentontravers/websocket-client](https://github.com/fentontravers
 
 # Clojars
 
-![https://clojars.org/juleffel/websocket-server/](https://clojars.org/juleffel/websocket-server/latest-version.svg)
-  
+<a href="https://clojars.org/juleffel/websocket-server/" target="_blank">![Foo](https://clojars.org/juleffel/websocket-server/latest-version.svg)]</a>
+
 # Usage
 
 ```clojure
