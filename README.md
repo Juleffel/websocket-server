@@ -24,7 +24,7 @@ be paired with [fentontravers/websocket-client](https://github.com/ftravers/webs
 (defn start
   "Demonstrate how to use the websocket server library."
   []
-  (start-ws-server port request-handler-upcase-string))
+  (start-ws-server port :on-receive request-handler-upcase-string))
 
 (defn send-all!
   [data]
@@ -55,9 +55,9 @@ back.
 # Multiple servers usage
 
 ```clojure
-(start-ws-server 8000 request-handler-1)
-(start-ws-server 8001 request-handler-2)
-(start-ws-server 8002 request-handler-3)
+(start-ws-server 8000 :on-receive request-handler-1)
+(start-ws-server 8001 :on-receive request-handler-2)
+(start-ws-server 8002 :on-receive request-handler-3)
 
 ; Send "Hello" to all channels opened to websocket on port 8000
 (send-all! 8000 "Hello")
@@ -85,6 +85,9 @@ back.
 ; json/read-str will be applied before sending data to request-json-handler
 ; json/write-str will be applied before sending data from request-json-handler
 ;   back on the websocket, or when using (send-all! port data)
-(start-ws-server 8000 request-handler-json json/read-str json/write-str)
+(start-ws-server 8000
+  :on-receive request-handler-json
+  :in-fn json/read-str
+  :out-fn json/write-str)
 
 ```

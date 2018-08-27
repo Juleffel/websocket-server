@@ -7,20 +7,22 @@
 (defonce channel-hub (atom {}))
 (defonce servers (atom {}))
 
-(defn websocket-server [port cb req]
+(defn websocket-server [port on-open on-receive on-close req]
   (let [{:keys [in-fn out-fn]} (@servers port)]
     (http/with-channel req channel
       (swap! channel-hub assoc-in [port channel] req)
+      (if on-open (on-open channel req))
       (http/on-close
        channel
        (fn [status]
          (log/debug (str "Websocket channel closed with status: " status))
+         (if on-close (on-close status))
          (swap! channel-hub update port dissoc channel)))
       (http/on-receive
        channel
        (fn [data]
-         (if (http/websocket? channel)
-           (let [resp (cb (in-fn data))]
+         (if (and on-receive (http/websocket? channel))
+           (let [resp (on-receive (in-fn data))]
              (log/debug "RECV: " data)
              (log/debug "RESP: " resp)
              (http/send! channel (out-fn resp)))))))))
@@ -42,19 +44,18 @@
     (swap! servers dissoc port)))
 
 (defn start-ws-server
-  ([port callback]
-   (start-ws-server port callback identity identity))
-  ([port callback in-fn out-fn]
-   (if (@servers port)
-     (stop-ws-server port))
-   (let [server
-         (http/run-server (partial websocket-server port callback)
-                          {:port port})]
-     (swap! servers assoc port
-       {:server server
-        :in-fn in-fn
-        :out-fn out-fn})
-     server)))
+  [port & {:keys [on-open on-receive on-close in-fn out-fn]
+           :or {in-fn identity, out-fn identity}}]
+  (if (@servers port)
+    (stop-ws-server port))
+  (let [server
+        (http/run-server (partial websocket-server port on-open on-receive on-close)
+                         {:port port})]
+    (swap! servers assoc port
+      {:server server
+       :in-fn in-fn
+       :out-fn out-fn})
+    server))
 
 (defn stop-all-ws-servers []
   (doseq [port (keys @servers)]
@@ -68,18 +69,23 @@
   ; Example to work with https://github.com/ftravers/transit-websocket-client/
   (start-ws-server
     port
+    :on-receive
     (fn [[action data]]
       [action (handle data)])
-    json/read-str json/write-str)
+    :in-fn json/read-str
+    :out-fn json/write-str)
   (send-all! port ["~#'" (str [[:back-msg] "Message from backend"])])
   ; Example to work with https://github.com/ftravers/reframe-websocket/
   (start-ws-server
     port
+    :on-receive
     (fn [[store-path data]]
       [store-path (handle data)])
+    :in-fn
     (fn [s]
       (let [[_ rf-msg] (json/read-str s)]
         (read-string rf-msg)))
+    :out-fn
     (fn [msg]
       (json/write-str
         ["~#'" (str msg)])))

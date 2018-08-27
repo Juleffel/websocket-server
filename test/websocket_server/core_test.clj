@@ -14,7 +14,7 @@
 (defn start
   "Demonstrate how to use the websocket server library."
   []
-  (start-ws-server port request-handler-upcase))
+  (start-ws-server port :on-receive request-handler-upcase))
 
 (defn stop
   "Stop websocket server"
@@ -24,7 +24,7 @@
 (defn restart [] (stop) (start))
 
 (deftest send-msg-and-check-resp
-  (start-ws-server port request-handler-upcase)
+  (start-ws-server port :on-receive request-handler-upcase)
   (let [ch (chan)
         client-ws
         (ws/connect
@@ -37,7 +37,7 @@
   (stop-ws-server port))
 
 (deftest send-all-test
-  (start-ws-server port #(throw (Exception. "Shouldn't be called as we are initiating messages on the server side")))
+  (start-ws-server port :on-receive #(throw (Exception. "Shouldn't be called as we are initiating messages on the server side")))
   (let [ch (chan)
         n 3
         clients-ws
@@ -58,7 +58,7 @@
 (deftest multiple-servers-test
   (let [n 3]
     (doseq [i (range 3)]
-      (start-ws-server (+ 8000 i) #(throw (Exception. "Shouldn't be called as we are initiating messages on the server side"))))
+      (start-ws-server (+ 8000 i) :on-receive #(throw (Exception. "Shouldn't be called as we are initiating messages on the server side"))))
     (let [ch (chan)
           clients-ws
           (doall
