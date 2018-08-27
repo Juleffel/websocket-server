@@ -1,12 +1,12 @@
 # WebSocket Server
 
 This is the server side of the websocket connection.  This is meant to
-be paired with [fentontravers/websocket-client](https://github.com/ftravers/websocket-client).
+be paired with [fentontravers/websocket-client](https://github.com/fentontravers/websocket-client).
 
 # Clojars
 
-![](https://clojars.org/fentontravers/websocket-server/latest-version.svg)
-  
+<a href="https://clojars.org/juleffel/websocket-server/" target="_blank">![Foo](https://clojars.org/juleffel/websocket-server/latest-version.svg)</a>
+
 # Usage
 
 ```clojure
@@ -84,10 +84,9 @@ back.
 
 ; json/read-str will be applied before sending data to request-json-handler
 ; json/write-str will be applied before sending data from request-json-handler
-;   back on the websocket, or when using (send-all! port data)
+;   back on the websocket, or when using send-all!
 (start-ws-server 8000
   :on-receive request-handler-json
   :in-fn json/read-str
   :out-fn json/write-str)
-
 ```
