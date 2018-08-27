@@ -1,11 +1,11 @@
 # WebSocket Server
 
 This is the server side of the websocket connection.  This is meant to
-be paired with [juleffel/websocket-client](https://github.com/juleffel/websocket-client).
+be paired with [fentontravers/websocket-client](https://github.com/fentontravers/websocket-client).
 
 # Clojars
 
-![](https://clojars.org/fentontravers/websocket-server/latest-version.svg)
+![https://clojars.org/juleffel/websocket-server/](https://clojars.org/juleffel/websocket-server/latest-version.svg)
   
 # Usage
 
