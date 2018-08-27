@@ -1,7 +1,7 @@
 # WebSocket Server
 
 This is the server side of the websocket connection.  This is meant to
-be paired with [fentontravers/websocket-client](https://github.com/ftravers/websocket-client).
+be paired with [juleffel/websocket-client](https://github.com/juleffel/websocket-client).
 
 # Clojars
 
